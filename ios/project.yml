@@ -1,0 +1,57 @@
+# Proyecto Xcode de NEX. Generar con:  brew install xcodegen && xcodegen generate
+name: NEX
+options:
+  bundleIdPrefix: app.nex
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  NEXCore:
+    path: NEXCore
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  NEX:
+    type: application
+    platform: iOS
+    sources:
+      - NEX
+    dependencies:
+      - package: NEXCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # URL del backend. En desarrollo, el servidor local (ver backend/README).
+        NEX_API_BASE_URL: "http://localhost:8080"
+    info:
+      path: NEX/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: NEX
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIBackgroundModes:
+          - location
+          - audio
+        NSLocationWhenInUseUsageDescription: NEX usa tu ubicación para mostrarte en el mapa, guiarte hasta tu destino y avisarte de incidencias cercanas.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        ITSAppUsesNonExemptEncryption: false
+        NEXAPIBaseURL: $(NEX_API_BASE_URL)
+schemes:
+  NEX:
+    build:
+      targets:
+        NEX: all
+    run:
+      config: Debug

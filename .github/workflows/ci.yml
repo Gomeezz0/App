@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (tipos y tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nex
+          POSTGRES_PASSWORD: nex
+          POSTGRES_DB: nex_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nex" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+        env:
+          TEST_DATABASE_URL: postgres://nex:nex@localhost:5432/nex_test
+
+  ios-core:
+    name: NEXCore (tests)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+        working-directory: ios/NEXCore
+
+  ios-app:
+    name: App iOS (compilación para simulador)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+        working-directory: ios
+      - name: Compilar
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build -project NEX.xcodeproj -scheme NEX \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO | tee build.log | grep -E "error|warning: unre|BUILD|\*\*" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Errores de compilación
+        if: failure()
+        working-directory: ios
+        run: grep -E "error:" build.log | sort -u | head -100
