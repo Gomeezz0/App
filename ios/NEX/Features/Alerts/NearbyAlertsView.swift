@@ -62,11 +62,11 @@ struct AlertRow: View {
         HStack(spacing: 12) {
             AlertBadge(type: alert.type, level: alert.isOfficial ? .high : alert.level, size: 40)
             VStack(alignment: .leading, spacing: 2) {
+                Text(alert.displayTitle).font(.nexHeadline).foregroundStyle(NEXColor.text).lineLimit(1)
                 HStack(spacing: 8) {
-                    Text(alert.displayTitle).font(.nexHeadline).foregroundStyle(NEXColor.text)
                     NEXTag(text: alert.isOfficial ? "Oficial" : alert.level.title, color: levelColor)
+                    Text(subtitle).font(.nexCaption).foregroundStyle(NEXColor.textDim).lineLimit(1)
                 }
-                Text(subtitle).font(.nexCaption).foregroundStyle(NEXColor.textDim)
             }
             Spacer()
             if let distance {

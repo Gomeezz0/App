@@ -87,7 +87,7 @@ struct WelcomeView: View {
     private func feature(_ symbol: String, _ text: String) -> some View {
         HStack(spacing: 14) {
             NEXIconTile(systemImage: symbol, tint: NEXColor.red, size: 44)
-            Text(text).font(.nexBody).foregroundStyle(NEXColor.text)
+            Text(text).font(.nexBody).foregroundStyle(NEXColor.text).fixedSize(horizontal: false, vertical: true)
         }
     }
 }

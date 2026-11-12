@@ -453,6 +453,8 @@ struct NEXTag: View {
             .font(.system(size: 10, weight: .bold))
             .kerning(0.6)
             .foregroundStyle(color)
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(color.opacity(0.14), in: Capsule())

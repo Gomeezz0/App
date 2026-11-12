@@ -112,11 +112,10 @@ jobs:
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b > /dev/null
           xcrun simctl location "$UDID" set 40.4168,-3.7038
-          # Cuando la prueba lo pide, conduce el simulador de Sol al Bernabéu a 30 m/s.
+          # Cuando la prueba lo pide, conduce el simulador de Sol al Bernabéu.
           ( for i in $(seq 1 1200); do [ -f /tmp/nex-shots/.drive ] && break; sleep 1; done
-            [ -f /tmp/nex-shots/.drive ] && xcrun simctl location "$UDID" start --speed=30 40.4168,-3.7038 \
-              40.4190,-3.6975 40.4193,-3.6931 40.4250,-3.6900 40.4335,-3.6880 40.4460,-3.6915 40.4525,-3.6905
-          ) > /dev/null 2>&1 &
+            [ -f /tmp/nex-shots/.drive ] && python3 ../.github/scripts/drive.py "$UDID" 30
+          ) > /tmp/nex-drive.log 2>&1 &
           xcodebuild test -project NEX.xcodeproj -scheme NEX -destination "id=$UDID" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error|Test Case|XCTAssert|No aparece|failed|TEST|\*\*" || true
           ls -la /tmp/nex-shots || true
@@ -152,6 +151,7 @@ jobs:
           echo "== Peticiones recibidas por el backend =="
           grep -o '"method":"[A-Z]*","url":"[^"?]*' backend/server.log | sort | uniq -c || true
           grep -o '"statusCode":[45][0-9][0-9]' backend/server.log | sort | uniq -c || true
+          echo "== Trayecto simulado =="; tail -3 /tmp/nex-drive.log || true
           echo "== Fallos de la prueba =="
           grep -E "error: -\[" ios/test.log | sed -E 's/^.*NEXFlowTests.swift:([0-9]+): error: [^:]*: /L\1: /' | cut -c1-220 | head -15 || true
           grep -E "TEST (SUCCEEDED|FAILED)" ios/test.log || true

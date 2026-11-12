@@ -112,7 +112,8 @@ public struct RouteTracker: Sendable {
             timeRemaining: route.expectedTravelTime * fraction,
             stepIndex: next,
             distanceToManeuver: max(0, toManeuver),
-            snapped: offRoute ? location : fix.point,
+            // Fuera de la ruta, o antes de incorporarse a ella, se muestra la posición real.
+            snapped: offRoute || !joined ? location : fix.point,
             snappedBearing: line.bearing(ofSegment: fix.segment),
             isOffRoute: offRoute,
             hasArrived: !offRoute && remaining <= config.arrivalDistance

@@ -18,6 +18,7 @@ struct RoutePreviewView: View {
     @State private var isComparing = false
     @State private var parking: [Place]?
     @State private var isLoadingParking = false
+    @State private var expandedNotice: UUID?
 
     struct DepartureOption: Identifiable {
         let minutes: Int
@@ -136,7 +137,14 @@ struct RoutePreviewView: View {
                     }
                     Text("Por \(route.name)").font(.nexHeadline).foregroundStyle(NEXColor.text).lineLimit(1)
                     if let notice = route.notices.first {
-                        Text(notice).font(.nexCaption).foregroundStyle(NEXColor.textDim).lineLimit(1)
+                        // Avisos del proveedor (zonas de bajas emisiones, restricciones…): se despliegan al tocar.
+                        Label(notice, systemImage: "info.circle.fill")
+                            .font(.nexCaption)
+                            .foregroundStyle(NEXColor.amber)
+                            .lineLimit(expandedNotice == route.id ? nil : 1)
+                            .multilineTextAlignment(.leading)
+                            .onTapGesture { NEXMotion.animate { expandedNotice = expandedNotice == route.id ? nil : route.id } }
+                            .accessibilityHint("Toca para leer el aviso completo")
                     }
                 }
                 Spacer()
