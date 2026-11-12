@@ -28,6 +28,7 @@ final class NavigationSession {
     @ObservationIgnored private let settings: SettingsStore
     @ObservationIgnored private let trips: TripStore
 
+    @ObservationIgnored private let liveActivity = LiveActivityController()
     @ObservationIgnored private var tracker: RouteTracker?
     @ObservationIgnored private var announcer = GuidanceAnnouncer()
     @ObservationIgnored private var monitor = AlertMonitor()
@@ -61,6 +62,12 @@ final class NavigationSession {
         monitor = AlertMonitor()
         announcer = GuidanceAnnouncer(verbosity: settings.verbosity)
         UIApplication.shared.isIdleTimerDisabled = true
+        liveActivity.start(
+            destinationName: destination.name,
+            state: .init(
+                phase: .navigating, instruction: route.steps.first?.instruction ?? "", distanceToManeuver:
+                    route.steps.first?.maneuverDistance ?? route.distance, distanceRemaining: route.distance,
+                arrival: Date().addingTimeInterval(route.expectedTravelTime)))
         if settings.verbosity != .off {
             speech.speak("Ruta iniciada. \(NEXFormat.spokenDistance(route.distance)) hasta \(destination.name)")
         }
@@ -75,6 +82,7 @@ final class NavigationSession {
                 maxSpeed: maxSpeed, completed: phase == .arrived))
         }
         speech.stop()
+        liveActivity.end()
         UIApplication.shared.isIdleTimerDisabled = false
         phase = .idle
         route = nil
@@ -119,6 +127,13 @@ final class NavigationSession {
             speech.speak(announcement.text, urgent: announcement.kind == .maneuver)
         }
         if update.hasArrived { phase = .arrived }
+
+        liveActivity.update(.init(
+            phase: phase == .arrived ? .arrived : (phase == .rerouting ? .rerouting : .navigating),
+            instruction: update.stepIndex.map { route.steps[$0].instruction } ?? "Sigue la ruta",
+            distanceToManeuver: update.distanceToManeuver,
+            distanceRemaining: update.distanceRemaining,
+            arrival: Date().addingTimeInterval(update.timeRemaining)))
     }
 
     // MARK: - Privado

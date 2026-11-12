@@ -21,8 +21,10 @@ targets:
     platform: iOS
     sources:
       - NEX
+      - Shared
     dependencies:
       - package: NEXCore
+      - target: NEXWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios
@@ -53,6 +55,33 @@ targets:
           NSAllowsLocalNetworking: true
         ITSAppUsesNonExemptEncryption: false
         NEXAPIBaseURL: $(NEX_API_BASE_URL)
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: app.nex.ios
+            CFBundleURLSchemes:
+              - nex
+  NEXWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - NEXWidgets
+      - Shared
+    dependencies:
+      - package: NEXCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
+    info:
+      path: NEXWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: NEX
+        CFBundleDevelopmentRegion: es
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
   NEXUITests:
     type: bundle.ui-testing
     platform: iOS

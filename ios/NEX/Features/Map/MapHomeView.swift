@@ -54,6 +54,10 @@ struct MapHomeView: View {
         .fullScreenCover(item: $model.pendingDestination) { place in
             RoutePreviewView(destination: place)
         }
+        // El widget de inicio abre la app con nex://search.
+        .onOpenURL { url in
+            if url.scheme == "nex", url.host == "search", !model.navigation.isActive { sheet = .search }
+        }
     }
 
     private var visibleAlerts: [CommunityAlert] {
