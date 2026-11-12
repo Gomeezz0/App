@@ -30,7 +30,7 @@ struct MapKitRoutingProvider: RoutingProvider {
         name: "Apple MapKit", trafficAwareETA: true, departureTimeETA: true, offlineMaps: false, speedLimits: false,
         laneGuidance: false)
 
-    private func makeRequest(from origin: Coordinate, to destination: Coordinate, departure: Date?) -> MKDirections.Request {
+    @MainActor private func makeRequest(from origin: Coordinate, to destination: Coordinate, departure: Date?) -> MKDirections.Request {
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: origin.cl))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination.cl))
@@ -42,7 +42,8 @@ struct MapKitRoutingProvider: RoutingProvider {
         return request
     }
 
-    func routes(from origin: Coordinate, to destination: Coordinate, departure: Date?) async throws -> [Route] {
+    // En el hilo principal: las preferencias se leen de los ajustes, que viven ahí.
+    @MainActor func routes(from origin: Coordinate, to destination: Coordinate, departure: Date?) async throws -> [Route] {
         let request = makeRequest(from: origin, to: destination, departure: departure)
         request.requestsAlternateRoutes = true
         let response = try await MKDirections(request: request).calculate()
@@ -51,7 +52,7 @@ struct MapKitRoutingProvider: RoutingProvider {
         return routes.classified()
     }
 
-    func travelTime(from origin: Coordinate, to destination: Coordinate, departure: Date) async throws -> TimeInterval {
+    @MainActor func travelTime(from origin: Coordinate, to destination: Coordinate, departure: Date) async throws -> TimeInterval {
         let request = makeRequest(from: origin, to: destination, departure: departure)
         return try await MKDirections(request: request).calculateETA().expectedTravelTime
     }
