@@ -8,60 +8,102 @@ struct SettingsView: View {
         @Bindable var settings = model.settings
         let capabilities = model.routing.capabilities
         Form {
-            Section("Voz") {
-                Picker("Indicaciones", selection: $settings.verbosity) {
+            Section {
+                Picker(selection: $settings.verbosity) {
                     ForEach(VoiceVerbosity.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    row("Indicaciones por voz", "speaker.wave.2.fill")
                 }
+            } header: {
+                NEXSectionLabel("Navegación")
             }
-            Section("Mapa") {
-                Picker("Aspecto", selection: $settings.mapAppearance) {
+
+            Section {
+                Picker(selection: $settings.mapAppearance) {
                     ForEach(MapAppearance.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    row("Aspecto del mapa", "moon.fill")
                 }
-                Toggle("Mostrar tráfico", isOn: $settings.showTraffic)
+                Toggle(isOn: $settings.showTraffic) { row("Mostrar tráfico", "car.2.fill") }
+            } header: {
+                NEXSectionLabel("Mapa")
             }
-            Section("Rutas") {
-                Toggle("Evitar peajes", isOn: $settings.avoidTolls)
-                Toggle("Evitar autopistas", isOn: $settings.avoidHighways)
-            }
+
             Section {
-                NavigationLink("Configuración de avisos") { AlertSettingsView() }
-                NavigationLink("Mapas sin conexión") { OfflineMapsView() }
+                Toggle(isOn: $settings.avoidTolls) { row("Evitar peajes", "eurosign") }
+                Toggle(isOn: $settings.avoidHighways) { row("Evitar autopistas", "road.lanes") }
+            } header: {
+                NEXSectionLabel("Rutas")
             }
+
             Section {
-                Toggle("Ahorro de batería", isOn: $settings.batterySaver)
+                NavigationLink { AlertSettingsView() } label: { row("Configuración de avisos", "bell.badge.fill") }
+                NavigationLink { OfflineMapsView() } label: { row("Mapas sin conexión", "arrow.down.circle.fill") }
+            } header: {
+                NEXSectionLabel("Avisos y mapas")
+            }
+
+            Section {
+                Toggle(isOn: $settings.batterySaver) { row("Ahorro de batería", "bolt.fill") }
+                Toggle(isOn: $settings.saveTrips) { row("Guardar historial de viajes", "clock.fill") }
+            } header: {
+                NEXSectionLabel("Batería y privacidad")
             } footer: {
-                Text("Consulta los avisos con menos frecuencia y mueve la cámara sin animación. NEX también lo hace solo si el iPhone está en modo de bajo consumo o se calienta.")
+                Text("El ahorro de batería consulta los avisos con menos frecuencia y mueve la cámara sin animación; NEX lo activa solo con el modo de bajo consumo o si el iPhone se calienta. El historial se guarda únicamente en este iPhone.")
+                    .foregroundStyle(NEXColor.textDim)
             }
+
             Section {
-                Toggle("Guardar historial de viajes", isOn: $settings.saveTrips)
-            } footer: {
-                Text("El historial y las estadísticas se guardan solo en este iPhone.")
-            }
-            Section("Proveedor de mapas") {
                 capability("Proveedor", capabilities.name)
                 capability("Tráfico en el tiempo estimado", capabilities.trafficAwareETA)
                 capability("Previsión por hora de salida", capabilities.departureTimeETA)
                 capability("Mapas sin conexión", capabilities.offlineMaps)
                 capability("Límites de velocidad", capabilities.speedLimits)
                 capability("Guiado de carril", capabilities.laneGuidance)
+            } header: {
+                NEXSectionLabel("Proveedor de mapas")
             }
+
             Section {
                 capability("Versión", Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
             } footer: {
-                Text("El uso de esta aplicación de guía en tiempo real es bajo tu responsabilidad. Respeta siempre las señales y las normas de tráfico; no manipules el teléfono mientras conduces.")
+                VStack(spacing: 14) {
+                    Text("El uso de esta aplicación de guía en tiempo real es bajo tu responsabilidad. Respeta siempre las señales y las normas de tráfico; no manipules el teléfono mientras conduces.")
+                        .foregroundStyle(NEXColor.textDim)
+                    NEXLogo(size: 22).opacity(0.5).frame(maxWidth: .infinity)
+                }
             }
         }
         .nexFormStyle()
         .nexScreen("Ajustes")
     }
 
+    /// Fila con icono de NEX y texto.
+    private func row(_ title: String, _ symbol: String) -> some View {
+        HStack(spacing: 12) {
+            NEXIconTile(systemImage: symbol, tint: NEXColor.red, size: 32).accessibilityHidden(true)
+            Text(title).font(.nexBody).foregroundStyle(NEXColor.text)
+        }
+    }
+
     private func capability(_ title: String, _ value: String) -> some View {
-        LabeledContent(title, value: value)
+        LabeledContent {
+            Text(value).foregroundStyle(NEXColor.textDim)
+        } label: {
+            Text(title).foregroundStyle(NEXColor.text)
+        }
     }
 
     private func capability(_ title: String, _ available: Bool) -> some View {
-        LabeledContent(title) {
-            Text(available ? "Sí" : "No disponible").foregroundStyle(available ? NEXColor.green : NEXColor.textDim)
+        LabeledContent {
+            HStack(spacing: 6) {
+                Image(systemName: available ? "checkmark.circle.fill" : "minus.circle")
+                Text(available ? "Sí" : "No disponible")
+            }
+            .font(.nexCaption)
+            .foregroundStyle(available ? NEXColor.green : NEXColor.textDim)
+        } label: {
+            Text(title).foregroundStyle(NEXColor.text)
         }
     }
 }

@@ -86,6 +86,7 @@ struct MapHomeView: View {
 
     private var browsing: some View {
         Map(position: $camera) {
+            if model.mapIsNight { MapShade() }
             UserAnnotation { _ in VehiclePuck(showsHeading: false, size: 26) }
             AlertMarkers(alerts: visibleAlerts) { sheet = .alert($0) }
         }

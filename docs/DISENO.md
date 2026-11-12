@@ -58,6 +58,10 @@ atenuado, relieve y qué puntos de interés mostrar.
 Lo aplicado con sus opciones nativas:
 
 - Esquema oscuro por defecto, énfasis atenuado (menos color de fondo), sin puntos de interés, relieve plano.
+- **Velo negro** (`MapShade`): una capa negra al 52 % situada con el nivel nativo de MapKit `aboveRoads`,
+  es decir, encima de calles y fondo pero **debajo de los nombres**. Oscurece el mapa hacia el negro sin tapar
+  los textos y sin dibujar calles falsas. La ruta, las zonas de aviso y los marcadores van por encima del velo.
+  Solo se aplica en modo noche.
 - Capa de tráfico de Apple (colores diferenciados sobre las vías).
 - Ruta activa en rojo con borde negro; tramo recorrido y alternativas en gris.
 - Indicador de vehículo, avisos, zonas y destino propios de NEX.

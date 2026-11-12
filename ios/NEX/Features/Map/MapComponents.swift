@@ -65,6 +65,7 @@ struct AlertMarkers: MapContent {
             MapCircle(center: alert.coordinate.cl, radius: alert.zoneRadiusM ?? 1000)
                 .foregroundStyle(alert.type.color.opacity(0.10))
                 .stroke(alert.type.color.opacity(0.55), lineWidth: 1.5)
+                .mapOverlayLevel(level: .aboveRoads)
         }
         ForEach(alerts) { alert in
             Annotation(alert.type.title, coordinate: alert.coordinate.cl, anchor: .center) {
@@ -115,10 +116,12 @@ struct RouteLine: MapContent {
                 .stroke(
                     NEXColor.black.opacity(selected ? 0.9 : 0.6),
                     style: StrokeStyle(lineWidth: selected ? 11 : 8, lineCap: .round, lineJoin: .round))
+                .mapOverlayLevel(level: .aboveRoads)
             MapPolyline(coordinates: coordinates)
                 .stroke(
                     selected ? NEXColor.red : NEXColor.mid,
                     style: StrokeStyle(lineWidth: selected ? 6.5 : 4.5, lineCap: .round, lineJoin: .round))
+                .mapOverlayLevel(level: .aboveRoads)
         }
     }
 }
@@ -140,6 +143,30 @@ struct DestinationPin: View {
 }
 
 // MARK: - Estilo
+
+/// Velo negro de NEX para el mapa oscuro de MapKit.
+///
+/// MapKit no permite cambiar los colores del mapa, pero sí dibujar capas en dos niveles:
+/// encima de las calles o encima de los nombres. Este velo va **encima de las calles y debajo
+/// de los nombres**, así que el fondo y las vías se oscurecen hacia el negro mientras los
+/// nombres de calles y carreteras siguen nítidos. No dibuja ninguna calle: solo atenúa las reales.
+struct MapShade: MapContent {
+    var opacity = 0.52
+
+    /// Rectángulo que cubre todo el mapa. Los puntos intermedios evitan que MapKit
+    /// interprete el borde de ±180° como un polígono de anchura cero.
+    private static let world: [CLLocationCoordinate2D] = {
+        let lons: [Double] = [-179.9, -90, 0, 90, 179.9]
+        return lons.map { CLLocationCoordinate2D(latitude: 85, longitude: $0) }
+            + lons.reversed().map { CLLocationCoordinate2D(latitude: -85, longitude: $0) }
+    }()
+
+    var body: some MapContent {
+        MapPolygon(coordinates: Self.world)
+            .foregroundStyle(Color.black.opacity(opacity))
+            .mapOverlayLevel(level: .aboveRoads)
+    }
+}
 
 extension View {
     /// Estilo de mapa de NEX con lo que MapKit permite de forma nativa: oscuro, colores

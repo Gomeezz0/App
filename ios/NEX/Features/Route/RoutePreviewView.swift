@@ -30,6 +30,7 @@ struct RoutePreviewView: View {
 
     var body: some View {
         Map(position: $camera) {
+            if model.mapIsNight { MapShade() }
             UserAnnotation { _ in VehiclePuck(showsHeading: false, size: 26) }
             ForEach(routes.filter { $0.id != selected?.id }) { route in
                 RouteLine(route: route, selected: false)

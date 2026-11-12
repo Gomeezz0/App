@@ -37,6 +37,7 @@ struct DrivingView: View {
 
     var body: some View {
         Map(position: $camera) {
+            if model.mapIsNight { MapShade() }
             if let route = nav.route {
                 let travelled = nav.progress?.distanceTravelled ?? 0
                 // Lo ya recorrido se apaga; lo que queda, en rojo.

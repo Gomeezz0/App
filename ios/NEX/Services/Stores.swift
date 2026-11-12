@@ -42,6 +42,10 @@ final class SettingsStore {
         hasOnboarded = defaults.bool(forKey: "hasOnboarded")
         verbosity = VoiceVerbosity(rawValue: defaults.string(forKey: "verbosity") ?? "") ?? .standard
         mapAppearance = MapAppearance(rawValue: defaults.string(forKey: "mapAppearance") ?? "") ?? .night
+        if !defaults.bool(forKey: "migratedToNightMap") {
+            mapAppearance = .night
+            defaults.set(true, forKey: "migratedToNightMap")
+        }
         avoidTolls = defaults.bool(forKey: "avoidTolls")
         avoidHighways = defaults.bool(forKey: "avoidHighways")
         showTraffic = defaults.object(forKey: "showTraffic") as? Bool ?? true
