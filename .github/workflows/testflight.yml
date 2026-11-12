@@ -1,0 +1,88 @@
+name: TestFlight
+
+# Compila NEX en modo Release, la firma con tu cuenta de Apple y la sube a App Store Connect.
+# Se lanza a mano desde la pestaña Actions. Requisitos y pasos: docs/PUBLICAR.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "URL pública del backend (https://…). Vacía = sin avisos ni cuentas"
+        required: false
+        default: ""
+
+jobs:
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      BUNDLE_ID: ${{ vars.NEX_BUNDLE_ID || 'app.nex.ios' }}
+      API_URL: ${{ inputs.api_url || vars.NEX_API_BASE_URL || 'http://localhost:8080' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar secretos
+        run: |
+          missing=""
+          [ -n "$TEAM_ID" ] || missing="$missing APPLE_TEAM_ID"
+          [ -n "$KEY_ID" ] || missing="$missing ASC_KEY_ID"
+          [ -n "$ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID"
+          [ -n "${{ secrets.ASC_KEY_P8 }}" ] || missing="$missing ASC_KEY_P8"
+          if [ -n "$missing" ]; then
+            echo "::error::Faltan secretos del repositorio:$missing. Ver docs/PUBLICAR.md"
+            exit 1
+          fi
+
+      - name: Clave de App Store Connect
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/keys/AuthKey.p8"
+
+      - run: brew install xcodegen
+      - run: xcodegen generate
+        working-directory: ios
+
+      - name: Archivar (Release, firma automática)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild archive -project NEX.xcodeproj -scheme NEX -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/NEX.xcarchive \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            NEX_BUNDLE_ID="$BUNDLE_ID" NEX_API_BASE_URL="$API_URL" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID" \
+            | tee archive.log | grep -E "error:|ARCHIVE|\*\*" || true
+          grep -q "ARCHIVE SUCCEEDED" archive.log
+
+      - name: Subir a App Store Connect
+        working-directory: ios
+        run: |
+          set -o pipefail
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath build/NEX.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID" \
+            | tee export.log | grep -E "error:|Upload|EXPORT|\*\*" || true
+          grep -qE "EXPORT SUCCEEDED|Upload succeeded" export.log
+
+      - name: Borrar la clave
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"

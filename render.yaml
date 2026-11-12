@@ -1,0 +1,24 @@
+# Despliegue del backend de NEX en Render (https://render.com) con un clic:
+# Render ▸ New ▸ Blueprint ▸ elige este repositorio. Crea la API y la base de datos.
+services:
+  - type: web
+    name: nex-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nex-db
+          property: connectionString
+
+databases:
+  - name: nex-db
+    plan: free

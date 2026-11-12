@@ -7,7 +7,7 @@ Navegador GPS para iOS con avisos comunitarios. Negro, antracita y rojo; sin pub
 | `ios/NEXCore` | Paquete Swift sin interfaz: seguimiento de ruta, guía por voz, avisos, cliente HTTP. Con tests. |
 | `ios/NEX` | App SwiftUI (iOS 17+). |
 | `backend` | API en Node 22 + Fastify + PostgreSQL: cuentas y avisos comunitarios. Con tests. |
-| `docs` | [Investigación](docs/INVESTIGACION.md) · [Arquitectura](docs/ARQUITECTURA.md) · [API](docs/API.md) · [Diseño](docs/DISENO.md) · [Estado y pruebas pendientes](docs/ESTADO.md) |
+| `docs` | [Investigación](docs/INVESTIGACION.md) · [Arquitectura](docs/ARQUITECTURA.md) · [API](docs/API.md) · [Diseño](docs/DISENO.md) · [Probar y publicar](docs/PUBLICAR.md) · [Estado y pruebas pendientes](docs/ESTADO.md) |
 
 ## Backend
 

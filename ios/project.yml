@@ -14,6 +14,8 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: "0.1.0"
+    # Identificador base. Debe ser único en Apple: cámbialo por uno tuyo (p. ej. com.tunombre.nex).
+    NEX_BUNDLE_ID: app.nex.ios
     CURRENT_PROJECT_VERSION: "1"
 targets:
   NEX:
@@ -27,7 +29,7 @@ targets:
       - target: NEXWidgets
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios
+        PRODUCT_BUNDLE_IDENTIFIER: $(NEX_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -70,7 +72,7 @@ targets:
       - package: NEXCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(NEX_BUNDLE_ID).widgets
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
     info:
@@ -91,7 +93,7 @@ targets:
       - target: NEX
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: $(NEX_BUNDLE_ID).uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: NEX
 schemes:
