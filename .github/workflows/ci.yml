@@ -42,7 +42,7 @@ jobs:
 
   ios-core:
     name: NEXCore (tests)
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - run: swift test
@@ -50,7 +50,7 @@ jobs:
 
   ios-app:
     name: App iOS (compilación para simulador)
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
@@ -71,7 +71,7 @@ jobs:
 
   ios-e2e:
     name: App iOS (prueba de extremo a extremo en simulador)
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 40
     permissions:
       contents: write
