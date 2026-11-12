@@ -129,10 +129,18 @@ final class AppModel {
         location.setMode(.navigating)
         // Con el coche parado no llega una lectura nueva: se arranca con la última conocida.
         if let last = location.location { navigation.handle(last) }
+        #if DEBUG
+        // Conducción simulada para pruebas y demos:  -nexSimulatedDrive <velocidad en m/s>
+        let speed = UserDefaults.standard.double(forKey: "nexSimulatedDrive")
+        if speed > 0 { location.startReplay(along: route.polyline, speed: speed) }
+        #endif
     }
 
     func stopNavigation() {
         navigation.stop()
+        #if DEBUG
+        location.stopReplay()
+        #endif
         location.setMode(.browsing)
     }
 

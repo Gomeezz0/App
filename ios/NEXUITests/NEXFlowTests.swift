@@ -53,7 +53,9 @@ final class NEXFlowTests: XCTestCase {
     }
 
     func testFullFlow() {
-        app.launchArguments += ["-nexPlainPasswordField", "YES", "-AppleLanguages", "(es)", "-AppleLocale", "es_ES"]
+        app.launchArguments += [
+            "-nexPlainPasswordField", "YES", "-nexSimulatedDrive", "40", "-AppleLanguages", "(es)", "-AppleLocale", "es_ES",
+        ]
         app.launch()
 
         // 1. Bienvenida y permiso de ubicación.
@@ -137,16 +139,16 @@ final class NEXFlowTests: XCTestCase {
         shot("aviso-enviado")
         sleep(3)
 
-        // 9. Trayecto simulado: el CI mueve el simulador por Alcalá, Recoletos y la Castellana
-        // cuando aparece este archivo.
-        FileManager.default.createFile(atPath: shots.appendingPathComponent(".drive").path, contents: Data())
-        let arrived = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Has llegado'")).firstMatch
-        for second in [12, 30, 55, 85, 120] {
+        // 9. La app reproduce el trayecto por la ruta a 40 m/s (modo de depuración) hasta el destino.
+        let arrived = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Has llegado'")).firstMatch
+        for index in 1...4 {
             if arrived.exists { break }
-            sleep(UInt32(second == 12 ? 12 : 25))
-            shot("conduccion-\(second)s")
+            sleep(15)
+            shot("conduccion-\(index)")
         }
-        if arrived.waitForExistence(timeout: 90) { shot("llegada") }
+        XCTAssertTrue(arrived.waitForExistence(timeout: 150), "No se detecta la llegada al destino")
+        shot("llegada")
 
         // Fin de la navegación (con confirmación si no se ha llegado).
         tap(app.buttons["Terminar navegación"], "terminar")
