@@ -45,7 +45,28 @@ final class RouteTrackerTests: XCTestCase {
 
     func testFarAwayIsOffRouteImmediately() {
         var tracker = RouteTracker(route: makeRoute())
+        _ = tracker.update(location: offset(sol, north: 250), horizontalAccuracy: 10)
         XCTAssertTrue(tracker.update(location: offset(sol, north: 300, east: 400), horizontalAccuracy: 10).isOffRoute)
+    }
+
+    func testStartingAwayFromTheRoadIsNotOffRoute() {
+        // Salida desde un aparcamiento a 200 m de la calzada: no es un desvío mientras se acerca.
+        var tracker = RouteTracker(route: makeRoute())
+        for east in [200.0, 200, 200, 150, 90] {
+            let p = tracker.update(location: offset(sol, north: 50, east: east), horizontalAccuracy: 10)
+            XCTAssertFalse(p.isOffRoute)
+            XCTAssertEqual(p.stepIndex, 0)
+        }
+        // Una vez en la ruta, la detección normal de desvío vuelve a aplicarse.
+        XCTAssertFalse(tracker.update(location: offset(sol, north: 100), horizontalAccuracy: 10).isOffRoute)
+        XCTAssertTrue(tracker.update(location: offset(sol, north: 150, east: 300), horizontalAccuracy: 10).isOffRoute)
+    }
+
+    func testDrivingAwayBeforeJoiningIsOffRoute() {
+        var tracker = RouteTracker(route: makeRoute())
+        XCTAssertFalse(tracker.update(location: offset(sol, north: 50, east: 200), horizontalAccuracy: 10).isOffRoute)
+        XCTAssertFalse(tracker.update(location: offset(sol, north: 50, east: 300), horizontalAccuracy: 10).isOffRoute)
+        XCTAssertTrue(tracker.update(location: offset(sol, north: 50, east: 380), horizontalAccuracy: 10).isOffRoute)
     }
 
     func testPoorAccuracyNeverTriggersOffRoute() {
@@ -132,6 +153,7 @@ final class GuidanceTests: XCTestCase {
         var announcer = GuidanceAnnouncer(verbosity: .standard)
         let away = offset(sol, north: 300, east: 400)
         var spoken: [String] = []
+        _ = tracker.update(location: offset(sol, north: 300), horizontalAccuracy: 5)
         for _ in 0..<3 {
             let progress = tracker.update(location: away, horizontalAccuracy: 5)
             spoken += announcer.announcements(for: progress, route: route, speed: 10).map(\.text)

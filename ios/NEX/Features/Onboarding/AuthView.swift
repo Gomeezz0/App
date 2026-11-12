@@ -50,9 +50,7 @@ struct AuthView: View {
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    SecureField("Contraseña", text: $password)
-                        .textContentType(mode == .register ? .newPassword : .password)
-                        .nexCard(padding: 14)
+                    passwordField
                     if mode == .register {
                         Text("Mínimo 10 caracteres.").font(.nexCaption).foregroundStyle(NEXColor.textDim)
                     }
@@ -80,6 +78,25 @@ struct AuthView: View {
             }
             .onChange(of: mode) { _, _ in errorMessage = nil }
         }
+    }
+
+    @ViewBuilder private var passwordField: some View {
+        #if DEBUG
+        // El simulador no deja escribir en campos seguros desde las pruebas de interfaz.
+        if UserDefaults.standard.bool(forKey: "nexPlainPasswordField") {
+            field("Contraseña", text: $password).textInputAutocapitalization(.never).autocorrectionDisabled()
+        } else {
+            secureField
+        }
+        #else
+        secureField
+        #endif
+    }
+
+    private var secureField: some View {
+        SecureField("Contraseña", text: $password)
+            .textContentType(mode == .register ? .newPassword : .password)
+            .nexCard(padding: 14)
     }
 
     private func field(_ title: String, text: Binding<String>) -> some View {

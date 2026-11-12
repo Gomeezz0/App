@@ -31,6 +31,8 @@ public struct RouteTracker: Sendable {
         public var arrivalDistance = 30.0
         /// Metros hacia delante en los que se busca el ajuste antes de recurrir a toda la ruta.
         public var searchAhead = 600.0
+        /// Antes de incorporarse a la ruta: metros que hay que alejarse de ella para declarar el desvío.
+        public var approachSlack = 150.0
 
         public init() {}
     }
@@ -40,6 +42,10 @@ public struct RouteTracker: Sendable {
     private var lastAlong = 0.0
     private var offCount = 0
     private var offRoute = false
+    /// El vehículo ya ha estado sobre la ruta. Hasta entonces (salida desde un aparcamiento o una
+    /// plaza, lejos de la calzada) estar separado de ella no es un desvío: se está yendo hacia ella.
+    private var joined = false
+    private var closestApproach = Double.infinity
 
     public init(route: Route, config: Config = Config()) {
         self.route = route
@@ -72,7 +78,17 @@ public struct RouteTracker: Sendable {
         let usable = horizontalAccuracy >= 0 && horizontalAccuracy <= config.maxUsableAccuracy
         if usable {
             let tolerance = max(config.offRouteDistance, horizontalAccuracy * 1.5)
-            if fix.offset > config.hardOffRouteDistance {
+            if !joined {
+                closestApproach = min(closestApproach, fix.offset)
+                if fix.offset <= tolerance {
+                    joined = true
+                    offCount = 0
+                    offRoute = false
+                } else if fix.offset > closestApproach + config.approachSlack {
+                    // Se aleja de la ruta sin haberla alcanzado: va hacia otro sitio.
+                    offRoute = true
+                }
+            } else if fix.offset > config.hardOffRouteDistance {
                 offRoute = true
             } else if fix.offset > tolerance {
                 offCount += 1

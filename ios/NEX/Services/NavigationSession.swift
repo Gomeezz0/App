@@ -42,6 +42,7 @@ final class NavigationSession {
     @ObservationIgnored private var travelled = 0.0
     @ObservationIgnored private var maxSpeed = 0.0
     @ObservationIgnored private var lastFix: CLLocation?
+    @ObservationIgnored private var lastReading: CLLocation?
 
     init(routing: RoutingProvider, speech: SpeechService, settings: SettingsStore, trips: TripStore) {
         self.routing = routing
@@ -102,6 +103,7 @@ final class NavigationSession {
     func handle(_ location: CLLocation) {
         guard isActive, phase != .arrived, var tracker, let route else { return }
         speed = max(0, location.speed)
+        lastReading = location
         record(location)
 
         let update = tracker.update(location: Coordinate(location.coordinate), horizontalAccuracy: location.horizontalAccuracy)
@@ -179,6 +181,8 @@ final class NavigationSession {
                 announcer = GuidanceAnnouncer(verbosity: settings.verbosity)
                 rerouteError = nil
                 phase = .navigating
+                // Sitúa al vehículo en la ruta nueva sin esperar a la siguiente lectura.
+                if let lastReading { handle(lastReading) }
             } catch {
                 // Se reintenta con las siguientes lecturas; mientras tanto se informa al conductor.
                 rerouteError = "Sin conexión para recalcular. Reintentando…"

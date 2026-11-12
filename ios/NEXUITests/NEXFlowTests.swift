@@ -55,6 +55,7 @@ final class NEXFlowTests: XCTestCase {
     }
 
     func testFullFlow() {
+        app.launchArguments += ["-nexPlainPasswordField", "YES"]
         app.launch()
 
         // 1. Bienvenida y permiso de ubicación.
@@ -114,7 +115,7 @@ final class NEXFlowTests: XCTestCase {
         let email = app.textFields["Correo electrónico"]
         tap(email, "campo correo")
         email.typeText("piloto@nex.test")
-        let password = app.secureTextFields["Contraseña"]
+        let password = app.textFields["Contraseña"]
         tap(password, "campo contraseña")
         password.typeText("clave-de-siembra-1")
         shot("inicio-sesion")
