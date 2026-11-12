@@ -117,6 +117,7 @@ jobs:
             [ -f /tmp/nex-shots/.drive ] && python3 ../.github/scripts/drive.py "$UDID" 30
           ) > /tmp/nex-drive.log 2>&1 &
           xcodebuild test -project NEX.xcodeproj -scheme NEX -destination "id=$UDID" \
+            -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error|Test Case|XCTAssert|No aparece|failed|TEST|\*\*" || true
           ls -la /tmp/nex-shots || true
           grep -q "TEST SUCCEEDED" test.log
