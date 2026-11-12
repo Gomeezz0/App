@@ -111,7 +111,7 @@ struct RoutePreviewView: View {
                     }
                     Text("Por \(route.name)").font(.nexBody).foregroundStyle(NEXColor.text).lineLimit(1)
                     if let notice = route.notices.first {
-                        Text(notice).font(.nexCaption).foregroundStyle(NEXColor.amber).lineLimit(2)
+                        Text(notice).font(.nexCaption).foregroundStyle(NEXColor.textDim).lineLimit(1)
                     }
                 }
                 Spacer()

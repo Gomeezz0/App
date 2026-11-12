@@ -110,6 +110,11 @@ jobs:
           UDID=$(xcrun simctl list devices available | grep -E "iPhone 1[5-9]( Pro)? \(" | head -1 | grep -oE "[0-9A-F-]{36}")
           echo "Simulador: $UDID"
           xcrun simctl boot "$UDID" || true
+          # Cuando la prueba lo pide, conduce el simulador de Sol al Bernabéu a 30 m/s.
+          ( for i in $(seq 1 1200); do [ -f /tmp/nex-shots/.drive ] && break; sleep 1; done
+            [ -f /tmp/nex-shots/.drive ] && xcrun simctl location "$UDID" start --speed=30 40.4168,-3.7038 \
+              40.4190,-3.6975 40.4193,-3.6931 40.4250,-3.6900 40.4335,-3.6880 40.4460,-3.6915 40.4525,-3.6905
+          ) > /dev/null 2>&1 &
           xcodebuild test -project NEX.xcodeproj -scheme NEX -destination "id=$UDID" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error|Test Case|XCTAssert|No aparece|failed|TEST|\*\*" || true
           ls -la /tmp/nex-shots || true

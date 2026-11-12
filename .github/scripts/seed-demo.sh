@@ -19,7 +19,8 @@ vote() { # token id voto lat lon
 }
 
 A=$(register ana); B=$(register bruno); C=$(register carla)
-psql "$DB" -qc "UPDATE users SET created_at = now() - interval '30 days' WHERE email IN ('ana@nex.test','bruno@nex.test','carla@nex.test')"
+register Piloto > /dev/null   # cuenta con la que inicia sesión la prueba de interfaz
+psql "$DB" -qc "UPDATE users SET created_at = now() - interval '30 days'"
 N=$(register novato)   # cuenta nueva: su aviso sale como "sin verificar"
 
 ACC=$(report "$A" accident 40.4215 -3.7010)

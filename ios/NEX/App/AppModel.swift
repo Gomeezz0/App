@@ -126,6 +126,8 @@ final class AppModel {
         navigation.setAlerts(alerts.alerts)
         navigation.start(route: route, to: destination)
         location.setMode(.navigating)
+        // Con el coche parado no llega una lectura nueva: se arranca con la última conocida.
+        if let last = location.location { navigation.handle(last) }
     }
 
     func stopNavigation() {
