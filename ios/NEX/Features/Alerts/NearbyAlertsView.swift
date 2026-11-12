@@ -35,7 +35,9 @@ struct NearbyAlertsView: View {
                 } label: {
                     AlertRow(alert: item.alert, distance: item.distance)
                 }
+                .buttonStyle(NEXRowButtonStyle())
                 .listRowBackground(NEXColor.surface)
+                .listRowSeparatorTint(NEXColor.mid)
             }
         }
         .nexScreen("Avisos cercanos")
@@ -60,7 +62,10 @@ struct AlertRow: View {
         HStack(spacing: 12) {
             AlertBadge(type: alert.type, level: alert.isOfficial ? .high : alert.level, size: 40)
             VStack(alignment: .leading, spacing: 2) {
-                Text(alert.displayTitle).font(.nexHeadline).foregroundStyle(NEXColor.text)
+                HStack(spacing: 8) {
+                    Text(alert.displayTitle).font(.nexHeadline).foregroundStyle(NEXColor.text)
+                    NEXTag(text: alert.isOfficial ? "Oficial" : alert.level.title, color: levelColor)
+                }
                 Text(subtitle).font(.nexCaption).foregroundStyle(NEXColor.textDim)
             }
             Spacer()
@@ -72,11 +77,20 @@ struct AlertRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var levelColor: Color {
+        if alert.isOfficial { return NEXColor.text }
+        switch alert.level {
+        case .high: return NEXColor.green
+        case .medium: return NEXColor.amber
+        case .low: return NEXColor.textDim
+        }
+    }
+
     private var subtitle: String {
-        if alert.isOfficial { return "Dato oficial" }
+        if alert.isOfficial { return "Fuente oficial" }
         let age = alert.createdAt.formatted(.relative(presentation: .named))
         let confirmed = alert.confirmations == 1 ? "1 confirmación" : "\(alert.confirmations) confirmaciones"
-        return "\(alert.level.title) · \(confirmed) · \(age)"
+        return "\(confirmed) · \(age)"
     }
 }
 
@@ -130,8 +144,9 @@ struct AlertDetailView: View {
             Spacer(minLength: 0)
         }
         .padding(20)
+        .padding(.top, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NEXColor.black.ignoresSafeArea())
+        .nexAnimation(value: alert)
     }
 
     private func info(_ text: String) -> some View {

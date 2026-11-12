@@ -41,7 +41,7 @@ final class SettingsStore {
         self.defaults = defaults
         hasOnboarded = defaults.bool(forKey: "hasOnboarded")
         verbosity = VoiceVerbosity(rawValue: defaults.string(forKey: "verbosity") ?? "") ?? .standard
-        mapAppearance = MapAppearance(rawValue: defaults.string(forKey: "mapAppearance") ?? "") ?? .automatic
+        mapAppearance = MapAppearance(rawValue: defaults.string(forKey: "mapAppearance") ?? "") ?? .night
         avoidTolls = defaults.bool(forKey: "avoidTolls")
         avoidHighways = defaults.bool(forKey: "avoidHighways")
         showTraffic = defaults.object(forKey: "showTraffic") as? Bool ?? true
@@ -57,6 +57,32 @@ final class SettingsStore {
     }
 
     func preference(for type: AlertType) -> AlertPreference { alertPreferences[type] ?? .voice }
+}
+
+/// Lugares favoritos, guardados en el dispositivo.
+@MainActor
+@Observable
+final class FavoritesStore {
+    private(set) var places: [Place] = []
+    @ObservationIgnored private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        if let data = defaults.data(forKey: "favorites"), let saved = try? JSONDecoder().decode([Place].self, from: data) {
+            places = saved
+        }
+    }
+
+    func contains(_ place: Place) -> Bool { places.contains { $0.id == place.id } }
+
+    func toggle(_ place: Place) {
+        if contains(place) {
+            places.removeAll { $0.id == place.id }
+        } else {
+            places.insert(place, at: 0)
+        }
+        if let data = try? JSONEncoder().encode(places) { defaults.set(data, forKey: "favorites") }
+    }
 }
 
 /// Historial de viajes en un archivo JSON local. Nunca sale del dispositivo.

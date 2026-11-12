@@ -23,8 +23,8 @@ struct NavigationActivityAttributes: ActivityAttributes {
 
 /// Paleta mínima de marca para la extensión (la app tiene la completa en `NEXColor`).
 enum NEXBrand {
-    static let black = Color(red: 0.031, green: 0.031, blue: 0.039)
-    static let red = Color(red: 0.882, green: 0.071, blue: 0.137)
+    static let black = Color(red: 0.035, green: 0.039, blue: 0.051)
+    static let red = Color(red: 0.953, green: 0.149, blue: 0.208)
     static let text = Color(red: 0.961, green: 0.961, blue: 0.969)
-    static let textDim = Color(red: 0.663, green: 0.678, blue: 0.710)
+    static let textDim = Color(red: 0.647, green: 0.655, blue: 0.682)
 }

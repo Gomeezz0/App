@@ -51,7 +51,7 @@ struct SettingsView: View {
                 Text("El uso de esta aplicación de guía en tiempo real es bajo tu responsabilidad. Respeta siempre las señales y las normas de tráfico; no manipules el teléfono mientras conduces.")
             }
         }
-        .listRowBackground(NEXColor.surface)
+        .nexFormStyle()
         .nexScreen("Ajustes")
     }
 
@@ -87,6 +87,7 @@ struct AlertSettingsView: View {
                 Text("Los avisos sin verificar nunca se anuncian por voz, sea cual sea esta configuración. Los avisos de control se muestran según la normativa de cada país.")
             }
         }
+        .nexFormStyle()
         .nexScreen("Avisos")
     }
 
@@ -132,6 +133,16 @@ struct OfflineMapsView: View {
             .labelStyle(BulletLabelStyle())
             .font(.nexBody)
             .foregroundStyle(NEXColor.textDim)
+    }
+}
+
+extension View {
+    /// Formularios con filas antracita, separadores discretos y controles en rojo.
+    func nexFormStyle() -> some View {
+        self.listRowBackground(NEXColor.surface)
+            .listRowSeparatorTint(NEXColor.mid)
+            .foregroundStyle(NEXColor.text)
+            .tint(NEXColor.red)
     }
 }
 

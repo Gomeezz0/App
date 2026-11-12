@@ -64,7 +64,8 @@ struct TripHistoryView: View {
 
     private func stat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 2) {
-            Text(value).font(.nexNumber(18)).foregroundStyle(NEXColor.text).minimumScaleFactor(0.7).lineLimit(1)
+            Text(value).font(.nexNumber(20)).foregroundStyle(NEXColor.text).minimumScaleFactor(0.7).lineLimit(1)
+                .contentTransition(.numericText())
             Text(label).font(.system(size: 11, weight: .medium)).foregroundStyle(NEXColor.textDim)
         }
         .frame(maxWidth: .infinity)
@@ -73,9 +74,9 @@ struct TripHistoryView: View {
 
     private func row(_ trip: Trip) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: trip.completed ? "flag.checkered" : "arrow.uturn.left")
-                .foregroundStyle(trip.completed ? NEXColor.red : NEXColor.textDim)
-                .frame(width: 26)
+            NEXIconTile(
+                systemImage: trip.completed ? "flag.checkered" : "arrow.uturn.left",
+                tint: trip.completed ? NEXColor.red : NEXColor.textDim)
             VStack(alignment: .leading, spacing: 2) {
                 Text(trip.destination.name).font(.nexHeadline).foregroundStyle(NEXColor.text).lineLimit(1)
                 Text(trip.startedAt.formatted(date: .abbreviated, time: .shortened))

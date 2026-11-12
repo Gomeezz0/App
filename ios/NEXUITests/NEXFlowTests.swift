@@ -8,13 +8,11 @@ final class NEXFlowTests: XCTestCase {
     private let shots = URL(fileURLWithPath: "/tmp/nex-shots")
     private var counter = 0
 
-    // Puerta del Sol, Madrid. El CI siembra avisos alrededor de este punto.
-    private let start = CLLocation(latitude: 40.4168, longitude: -3.7038)
 
     override func setUp() {
         continueAfterFailure = true
         try? FileManager.default.createDirectory(at: shots, withIntermediateDirectories: true)
-        XCUIDevice.shared.location = XCUILocation(location: start)
+        // La posición la fija el CI con `simctl location` (Puerta del Sol) y después la mueve.
     }
 
     private func shot(_ name: String) {
@@ -71,10 +69,12 @@ final class NEXFlowTests: XCTestCase {
 
         // 3. Buscador.
         tap(app.buttons["Buscar destino"], "buscador")
-        let field = app.searchFields.firstMatch
+        sleep(1)
+        shot("buscador")
+        let field = app.textFields["search-field"]
         tap(field, "campo de búsqueda")
         field.typeText("Estadio Santiago Bernabeu")
-        let firstResult = app.collectionViews.buttons.element(boundBy: 0)
+        let firstResult = app.buttons["search-result-0"]
         XCTAssertTrue(firstResult.waitForExistence(timeout: 20), "La búsqueda no devuelve resultados")
         sleep(1)
         shot("busqueda")
@@ -84,6 +84,7 @@ final class NEXFlowTests: XCTestCase {
         let startButton = app.buttons["Iniciar"]
         XCTAssertTrue(startButton.waitForExistence(timeout: 40), "No se calculan rutas")
         sleep(2)
+        tap(app.buttons["Guardar en favoritos"], "estrella de favorito")
         shot("rutas")
         if app.buttons["Comparar con salir más tarde"].exists {
             app.buttons["Comparar con salir más tarde"].tap()
@@ -180,6 +181,11 @@ final class NEXFlowTests: XCTestCase {
             app.swipeDown(velocity: .fast)
             sleep(1)
         }
+        back()
+
+        tap(app.buttons.containing(.staticText, identifier: "Favoritos").firstMatch, "favoritos")
+        sleep(1)
+        shot("favoritos")
         back()
 
         tap(app.buttons.containing(.staticText, identifier: "Historial de viajes").firstMatch, "historial")

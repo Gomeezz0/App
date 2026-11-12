@@ -13,10 +13,18 @@ struct ProfileView: View {
         List {
             if let user = model.user {
                 Section {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(user.displayName).font(.nexTitle).foregroundStyle(NEXColor.text)
-                        Text(user.email).font(.nexCaption).foregroundStyle(NEXColor.textDim)
+                    HStack(spacing: 16) {
+                        Text(String(user.displayName.prefix(1)).uppercased())
+                            .font(.nexNumber(26))
+                            .foregroundStyle(.white)
+                            .frame(width: 60, height: 60)
+                            .background(NEXColor.redGradient, in: Circle())
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(user.displayName).font(.nexTitle).foregroundStyle(NEXColor.text)
+                            Text(user.email).font(.nexCaption).foregroundStyle(NEXColor.textDim)
+                        }
                     }
+                    .padding(.vertical, 6)
                     .listRowBackground(NEXColor.surface)
                 }
                 Section("Comunidad") {

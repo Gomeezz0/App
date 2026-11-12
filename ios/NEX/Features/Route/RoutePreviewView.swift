@@ -29,53 +29,78 @@ struct RoutePreviewView: View {
 
     var body: some View {
         Map(position: $camera) {
-            UserAnnotation()
+            UserAnnotation { _ in VehiclePuck(showsHeading: false, size: 26) }
             ForEach(routes.filter { $0.id != selected?.id }) { route in
                 RouteLine(route: route, selected: false)
             }
             ForEach(routes.filter { $0.id == selected?.id }) { route in
                 RouteLine(route: route)
             }
-            Marker(destination.name, systemImage: "flag.checkered", coordinate: destination.coordinate.cl)
-                .tint(NEXColor.red)
+            Annotation(destination.name, coordinate: destination.coordinate.cl, anchor: .center) { DestinationPin() }
         }
         .nexMapStyle(traffic: model.settings.showTraffic, night: model.mapIsNight)
+        .mapControls {}
+        .overlay { MapScrim(edge: .top, height: 150) }
         .safeAreaInset(edge: .top) { header }
         .safeAreaInset(edge: .bottom) { panel }
         .task(id: destination.id) { await loadRoutes() }
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            MapButton(systemImage: "chevron.left", label: "Volver") { dismiss() }
+        let isFavorite = model.favorites.contains(destination)
+        return HStack(spacing: 12) {
+            MapButton(systemImage: "chevron.left", label: "Volver", size: 46) { dismiss() }
             VStack(alignment: .leading, spacing: 2) {
                 Text(destination.name).font(.nexHeadline).foregroundStyle(NEXColor.text).lineLimit(1)
                 if !destination.subtitle.isEmpty {
                     Text(destination.subtitle).font(.nexCaption).foregroundStyle(NEXColor.textDim).lineLimit(1)
                 }
             }
-            Spacer()
+            Spacer(minLength: 0)
+            Button {
+                NEXMotion.animate(NEXMotion.quick) { model.favorites.toggle(destination) }
+            } label: {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(isFavorite ? NEXColor.red : NEXColor.textDim)
+                    .frame(width: 46, height: 46)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .accessibilityLabel(isFavorite ? "Quitar de favoritos" : "Guardar en favoritos")
         }
-        .nexCard(padding: 10)
-        .padding(.horizontal, 14)
+        .padding(8)
+        .nexPanel(radius: 31)
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .nexAppear()
     }
 
-    @ViewBuilder private var panel: some View {
+    private var panel: some View {
         VStack(spacing: 12) {
             if isLoading {
-                ProgressView("Calculando rutas…").tint(NEXColor.red).foregroundStyle(NEXColor.textDim).padding(24)
+                VStack(spacing: 14) {
+                    NEXLoader(size: 34)
+                    Text("Calculando rutas…").font(.nexHeadline).foregroundStyle(NEXColor.textDim)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 28)
+                .transition(.opacity)
             } else if let errorMessage {
                 NEXNotice(systemImage: "exclamationmark.triangle.fill", title: "No se pudo calcular la ruta", message: errorMessage)
                 Button("Reintentar") { Task { await loadRoutes() } }.buttonStyle(NEXSecondaryButtonStyle())
             } else {
                 ScrollView {
                     VStack(spacing: 10) {
-                        ForEach(routes) { route in routeRow(route) }
+                        ForEach(Array(routes.enumerated()), id: \.element.id) { index, route in
+                            routeRow(route).nexAppear(delay: Double(index) * 0.06)
+                        }
                         extras
                     }
+                    .padding(.top, 2)
                 }
                 .frame(maxHeight: 300)
                 .scrollBounceBehavior(.basedOnSize)
+                .scrollIndicators(.hidden)
 
                 Button {
                     if let selected {
@@ -86,46 +111,51 @@ struct RoutePreviewView: View {
                     Label("Iniciar", systemImage: "location.north.fill")
                 }
                 .buttonStyle(NEXPrimaryButtonStyle())
+                .sensoryFeedback(.impact, trigger: model.navigation.isActive)
             }
         }
         .padding(14)
-        .background(NEXColor.black, in: UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24))
+        .nexPanel(radius: 30)
+        .padding(.horizontal, 8)
+        .padding(.bottom, 4)
+        .nexAnimation(value: isLoading)
+        .nexAnimation(NEXMotion.quick, value: selectedID)
     }
 
     private func routeRow(_ route: Route) -> some View {
         let isSelected = route.id == selected?.id
         return Button {
             selectedID = route.id
-            withAnimation { camera = .rect(route.polyline.cameraRect) }
+            NEXMotion.animate(NEXMotion.panel) { camera = .rect(route.polyline.cameraRect) }
         } label: {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(route.kind.title.uppercased())
-                            .font(.system(size: 11, weight: .bold))
-                            .kerning(0.8)
-                            .foregroundStyle(route.kind == .fastest ? NEXColor.red : NEXColor.textDim)
-                        if route.hasTolls {
-                            Text("PEAJE").font(.system(size: 11, weight: .bold)).foregroundStyle(NEXColor.amber)
-                        }
+                    HStack(spacing: 6) {
+                        NEXTag(text: route.kind.title, color: route.kind == .fastest ? NEXColor.red : NEXColor.textDim)
+                        if route.hasTolls { NEXTag(text: "Peaje", color: NEXColor.amber) }
                     }
-                    Text("Por \(route.name)").font(.nexBody).foregroundStyle(NEXColor.text).lineLimit(1)
+                    Text("Por \(route.name)").font(.nexHeadline).foregroundStyle(NEXColor.text).lineLimit(1)
                     if let notice = route.notices.first {
                         Text(notice).font(.nexCaption).foregroundStyle(NEXColor.textDim).lineLimit(1)
                     }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(NEXFormat.duration(route.expectedTravelTime)).font(.nexNumber(20)).foregroundStyle(NEXColor.text)
+                    Text(NEXFormat.duration(route.expectedTravelTime))
+                        .font(.nexNumber(22))
+                        .foregroundStyle(isSelected ? NEXColor.text : NEXColor.textDim)
                     Text(NEXFormat.distance(route.distance)).font(.nexCaption).foregroundStyle(NEXColor.textDim)
                 }
             }
             .padding(14)
-            .background(NEXColor.surface, in: RoundedRectangle(cornerRadius: NEXMetric.radius))
+            .background(
+                isSelected ? NEXColor.red.opacity(0.10) : NEXColor.surfaceHigh.opacity(0.6),
+                in: RoundedRectangle(cornerRadius: NEXMetric.radius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: NEXMetric.radius)
-                    .stroke(isSelected ? NEXColor.red : NEXColor.stroke, lineWidth: isSelected ? 2 : 1))
+                RoundedRectangle(cornerRadius: NEXMetric.radius, style: .continuous)
+                    .strokeBorder(isSelected ? NEXColor.red : NEXColor.stroke, lineWidth: isSelected ? 1.5 : 1))
         }
+        .buttonStyle(NEXRowButtonStyle())
         .accessibilityLabel(
             "\(route.kind.title), por \(route.name), \(NEXFormat.duration(route.expectedTravelTime)), \(NEXFormat.distance(route.distance))")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -139,7 +169,7 @@ struct RoutePreviewView: View {
                     Task { await compareDepartures() }
                 } label: {
                     if isComparing {
-                        ProgressView().tint(NEXColor.text)
+                        NEXLoader(size: 22)
                     } else {
                         Label("Comparar con salir más tarde", systemImage: "clock.badge.questionmark")
                     }
@@ -148,7 +178,7 @@ struct RoutePreviewView: View {
                 .disabled(isComparing)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("TIEMPO ESTIMADO SEGÚN LA SALIDA").font(.system(size: 11, weight: .bold)).foregroundStyle(NEXColor.textDim)
+                    NEXSectionLabel("Tiempo estimado según la salida")
                     HStack(spacing: 8) {
                         ForEach(departures) { option in
                             VStack(spacing: 2) {
@@ -164,13 +194,15 @@ struct RoutePreviewView: View {
                     Text("Estimación de \(model.routing.capabilities.name) con su previsión de tráfico.")
                         .font(.system(size: 11)).foregroundStyle(NEXColor.textDim)
                 }
-                .nexCard(padding: 12)
+                .padding(12)
+                .background(NEXColor.surfaceHigh.opacity(0.6), in: RoundedRectangle(cornerRadius: NEXMetric.radius, style: .continuous))
+                .transition(NEXMotion.rise)
             }
         }
 
         if let parking {
             VStack(alignment: .leading, spacing: 8) {
-                Text("APARCAMIENTOS CERCA DEL DESTINO").font(.system(size: 11, weight: .bold)).foregroundStyle(NEXColor.textDim)
+                NEXSectionLabel("Aparcamientos cerca del destino")
                 if parking.isEmpty {
                     Text("No se han encontrado aparcamientos a menos de 600 m.").font(.nexCaption).foregroundStyle(NEXColor.textDim)
                 }
@@ -197,13 +229,15 @@ struct RoutePreviewView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .nexCard(padding: 12)
+            .padding(12)
+                .background(NEXColor.surfaceHigh.opacity(0.6), in: RoundedRectangle(cornerRadius: NEXMetric.radius, style: .continuous))
+                .transition(NEXMotion.rise)
         } else {
             Button {
                 Task { await loadParking() }
             } label: {
                 if isLoadingParking {
-                    ProgressView().tint(NEXColor.text)
+                    NEXLoader(size: 22)
                 } else {
                     Label("Buscar aparcamiento cerca", systemImage: "parkingsign")
                 }
@@ -232,7 +266,7 @@ struct RoutePreviewView: View {
             guard !Task.isCancelled else { return }
             routes = found
             selectedID = found.first?.id
-            if let first = found.first { camera = .rect(first.polyline.cameraRect) }
+            if let first = found.first { NEXMotion.animate(NEXMotion.panel) { camera = .rect(first.polyline.cameraRect) } }
         } catch {
             guard !Task.isCancelled else { return }
             routes = []

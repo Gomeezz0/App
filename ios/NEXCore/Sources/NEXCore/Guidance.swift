@@ -93,3 +93,30 @@ public struct GuidanceAnnouncer: Sendable {
         return first.lowercased() + text.dropFirst()
     }
 }
+
+/// Tipo de maniobra deducido del texto de la indicación (español o inglés), para elegir su icono.
+public enum ManeuverKind: Sendable, Equatable {
+    case straight, left, right, slightLeft, slightRight, uTurn, roundabout, arrive
+
+    public init(instruction: String) {
+        let text = instruction.lowercased()
+        func has(_ words: String...) -> Bool { words.contains { text.contains($0) } }
+
+        if has("destino", "has llegado", "destination", "arrive") {
+            self = .arrive
+        } else if has("rotonda", "glorieta", "roundabout") {
+            self = .roundabout
+        } else if has("cambio de sentido", "media vuelta", "u-turn", "u turn") {
+            self = .uTurn
+        } else {
+            let slight = has("ligeramente", "mantente", "manténgase", "mantén", "slight", "keep", "salida", "exit", "incorpórate", "merge")
+            if has("izquierda", "left") {
+                self = slight ? .slightLeft : .left
+            } else if has("derecha", "right") {
+                self = slight ? .slightRight : .right
+            } else {
+                self = .straight
+            }
+        }
+    }
+}

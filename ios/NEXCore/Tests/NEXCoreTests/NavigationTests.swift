@@ -132,6 +132,18 @@ final class GuidanceTests: XCTestCase {
         ])
     }
 
+    func testManeuverKindFromInstruction() {
+        XCTAssertEqual(ManeuverKind(instruction: "Gira a la derecha por Calle de la Salud"), .right)
+        XCTAssertEqual(ManeuverKind(instruction: "Gira a la izquierda por Gran Vía"), .left)
+        XCTAssertEqual(ManeuverKind(instruction: "Mantente a la izquierda en la bifurcación"), .slightLeft)
+        XCTAssertEqual(ManeuverKind(instruction: "Toma la salida 12 a la derecha"), .slightRight)
+        XCTAssertEqual(ManeuverKind(instruction: "En la rotonda, toma la segunda salida"), .roundabout)
+        XCTAssertEqual(ManeuverKind(instruction: "Haz un cambio de sentido"), .uTurn)
+        XCTAssertEqual(ManeuverKind(instruction: "Tu destino está a la derecha"), .arrive)
+        XCTAssertEqual(ManeuverKind(instruction: "Continúa por Paseo de la Castellana"), .straight)
+        XCTAssertEqual(ManeuverKind(instruction: "Turn left onto Main St"), .left)
+    }
+
     func testFasterMeansEarlier() {
         XCTAssertGreaterThan(GuidanceAnnouncer.prepareDistance(speed: 33), GuidanceAnnouncer.prepareDistance(speed: 8))
         XCTAssertEqual(GuidanceAnnouncer.prepareDistance(speed: 33), 594, accuracy: 1)

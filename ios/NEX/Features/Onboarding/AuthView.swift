@@ -32,6 +32,14 @@ struct AuthView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 14) {
+                        NEXLogo(size: 30)
+                        Text(mode == .signIn ? "Bienvenido de nuevo" : "Únete a la comunidad")
+                            .font(.nexTitle).foregroundStyle(NEXColor.text)
+                            .contentTransition(.opacity)
+                    }
+                    .padding(.bottom, 4)
+
                     Picker("Modo", selection: $mode) {
                         ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -64,7 +72,7 @@ struct AuthView: View {
                     Button {
                         submit()
                     } label: {
-                        if isWorking { ProgressView().tint(.white) } else { Text(mode.rawValue) }
+                        if isWorking { NEXLoader(size: 22) } else { Text(mode.rawValue) }
                     }
                     .buttonStyle(NEXPrimaryButtonStyle())
                     .disabled(!isValid || isWorking)
@@ -72,6 +80,7 @@ struct AuthView: View {
                     .padding(.top, 8)
                 }
                 .padding(20)
+                .nexAnimation(value: mode)
             }
             .nexScreen("Cuenta NEX")
             .toolbar {
@@ -95,13 +104,16 @@ struct AuthView: View {
     }
 
     private var secureField: some View {
-        SecureField("Contraseña", text: $password)
-            .textContentType(mode == .register ? .newPassword : .password)
-            .nexCard(padding: 14)
+        NEXField {
+            SecureField("Contraseña", text: $password, prompt: Text("Contraseña").foregroundStyle(NEXColor.textDim))
+                .textContentType(mode == .register ? .newPassword : .password)
+        }
     }
 
     private func field(_ title: String, text: Binding<String>) -> some View {
-        TextField(title, text: text).nexCard(padding: 14)
+        NEXField {
+            TextField(title, text: text, prompt: Text(title).foregroundStyle(NEXColor.textDim))
+        }
     }
 
     private func submit() {

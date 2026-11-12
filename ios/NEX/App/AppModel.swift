@@ -10,6 +10,7 @@ import Observation
 final class AppModel {
     let settings: SettingsStore
     let trips: TripStore
+    let favorites = FavoritesStore()
     let location: LocationService
     let alerts: AlertsService
     let navigation: NavigationSession

@@ -31,7 +31,18 @@ struct ReportSheet: View {
                     }
                     .padding(20)
                 } else if case .sent(let message) = outcome {
-                    NEXNotice(systemImage: "checkmark.circle.fill", title: "Gracias", message: message)
+                    VStack(spacing: 14) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 30, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(width: 72, height: 72)
+                            .background(NEXColor.redGradient, in: Circle())
+                            .symbolEffect(.bounce, value: outcome)
+                        Text("Gracias").font(.nexTitle).foregroundStyle(NEXColor.text)
+                        Text(message).font(.nexBody).foregroundStyle(NEXColor.textDim).multilineTextAlignment(.center)
+                    }
+                    .padding(28)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
                 } else {
                     ScrollView {
                         if case .failed(let message) = outcome {
@@ -42,7 +53,9 @@ struct ReportSheet: View {
                                 .padding(.horizontal, 16)
                         }
                         LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(AlertType.allCases) { type in button(for: type) }
+                            ForEach(Array(AlertType.allCases.enumerated()), id: \.element) { index, type in
+                                button(for: type).nexAppear(delay: Double(index) * 0.025)
+                            }
                         }
                         .padding(16)
                         Text("El aviso se sitúa en tu posición actual. Otros conductores podrán confirmarlo o indicar que ya no está.")
@@ -52,6 +65,7 @@ struct ReportSheet: View {
                     }
                 }
             }
+            .nexAnimation(value: outcome)
             .nexScreen("Avisar")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() } }
@@ -65,16 +79,16 @@ struct ReportSheet: View {
         } label: {
             VStack(spacing: 10) {
                 if sending == type {
-                    ProgressView().tint(NEXColor.text).frame(height: 44)
+                    NEXLoader(size: 30).frame(height: 48)
                 } else {
-                    AlertBadge(type: type, size: 44)
+                    AlertBadge(type: type, size: 48)
                 }
                 Text(type.title).font(.nexHeadline).foregroundStyle(NEXColor.text)
             }
-            .frame(maxWidth: .infinity, minHeight: 104)
-            .background(NEXColor.surface, in: RoundedRectangle(cornerRadius: NEXMetric.radius))
-            .overlay(RoundedRectangle(cornerRadius: NEXMetric.radius).stroke(NEXColor.stroke))
+            .frame(maxWidth: .infinity, minHeight: 112)
+            .nexCard(padding: 0)
         }
+        .buttonStyle(NEXRowButtonStyle())
         .disabled(sending != nil)
         .accessibilityLabel("Avisar de \(type.title.lowercased())")
     }

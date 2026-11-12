@@ -5,26 +5,37 @@ struct WelcomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
 
+    @State private var logoProgress: CGFloat = 0
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer()
-            NEXLogo(size: 84)
+            NEXLogo(size: 88, progress: logoProgress)
+                .shadow(color: NEXColor.red.opacity(0.35), radius: 24, y: 8)
+                .onAppear {
+                    if NEXMotion.reduced {
+                        logoProgress = 1
+                    } else {
+                        withAnimation(.smooth(duration: 0.9).delay(0.15)) { logoProgress = 1 }
+                    }
+                }
             Text("NEX")
-                .font(.system(size: 54, weight: .heavy))
-                .kerning(4)
+                .font(.system(size: 60, weight: .heavy).width(.expanded))
                 .foregroundStyle(NEXColor.text)
-                .padding(.top, 20)
-            Text("Navegación clara.\nAvisos en los que puedes confiar.")
-                .font(.system(size: 22, weight: .medium))
+                .padding(.top, 22)
+                .nexAppear(delay: 0.15)
+            Text("Navegación precisa.\nAvisos en los que puedes confiar.")
+                .font(.system(size: 21, weight: .medium))
                 .foregroundStyle(NEXColor.textDim)
-                .padding(.top, 6)
+                .padding(.top, 8)
+                .nexAppear(delay: 0.25)
 
-            VStack(alignment: .leading, spacing: 18) {
-                feature("location.north.line.fill", "Guía giro a giro con voz y tráfico en el tiempo estimado")
-                feature("checkmark.shield.fill", "Avisos de la comunidad, ponderados por fiabilidad")
-                feature("battery.75percent", "Sin publicidad y sin GPS en segundo plano fuera de un viaje")
+            VStack(alignment: .leading, spacing: 14) {
+                feature("location.north.fill", "Guía giro a giro con voz y tráfico en el tiempo estimado").nexAppear(delay: 0.40)
+                feature("checkmark.shield.fill", "Avisos de la comunidad, ponderados por fiabilidad").nexAppear(delay: 0.48)
+                feature("bolt.fill", "Sin publicidad y sin GPS en segundo plano fuera de un viaje").nexAppear(delay: 0.56)
             }
-            .padding(.top, 36)
+            .padding(.top, 34)
             Spacer()
 
             if model.location.isDenied {
@@ -55,7 +66,14 @@ struct WelcomeView: View {
             }
         }
         .padding(24)
-        .background(NEXColor.black.ignoresSafeArea())
+        .background {
+            ZStack {
+                NEXColor.black
+                // Resplandor rojo muy tenue en la esquina: profundidad sin recargar.
+                RadialGradient(colors: [NEXColor.red.opacity(0.20), .clear], center: .topTrailing, startRadius: 10, endRadius: 420)
+            }
+            .ignoresSafeArea()
+        }
         .onChange(of: model.location.isAuthorized) { _, authorized in
             if authorized { finish() }
         }
@@ -67,11 +85,8 @@ struct WelcomeView: View {
     }
 
     private func feature(_ symbol: String, _ text: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(NEXColor.red)
-                .frame(width: 28)
+        HStack(spacing: 14) {
+            NEXIconTile(systemImage: symbol, tint: NEXColor.red, size: 44)
             Text(text).font(.nexBody).foregroundStyle(NEXColor.text)
         }
     }
