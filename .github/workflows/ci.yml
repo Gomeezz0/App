@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, "claude/**"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -67,3 +68,79 @@ jobs:
         if: failure()
         working-directory: ios
         run: grep -E "error:" build.log | sort -u | head -100
+
+  ios-e2e:
+    name: App iOS (prueba de extremo a extremo en simulador)
+    runs-on: macos-15
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    env:
+      DATABASE_URL: postgres://nex:nex@localhost:5432/nex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: PostgreSQL
+        run: |
+          brew list postgresql@14 >/dev/null 2>&1 || brew install postgresql@14
+          echo "$(brew --prefix postgresql@14)/bin" >> "$GITHUB_PATH"
+          export PATH="$(brew --prefix postgresql@14)/bin:$PATH"
+          brew services start postgresql@14
+          for i in $(seq 1 30); do pg_isready -q && break; sleep 1; done
+          psql postgres -c "CREATE USER nex WITH PASSWORD 'nex' SUPERUSER" -c "CREATE DATABASE nex OWNER nex"
+      - name: Backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+          JWT_SECRET=secreto-solo-para-ci-de-mas-de-32-caracteres AUTH_RATE_LIMIT_PER_MINUTE=1000 \
+            nohup node dist/server.js > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS localhost:8080/health && break; sleep 1; done
+      - name: Sembrar avisos de prueba
+        run: .github/scripts/seed-demo.sh
+      - run: brew install xcodegen
+      - run: xcodegen generate
+        working-directory: ios
+      - name: Prueba de interfaz
+        working-directory: ios
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available | grep -E "iPhone 1[5-9]( Pro)? \(" | head -1 | grep -oE "[0-9A-F-]{36}")
+          echo "Simulador: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcodebuild test -project NEX.xcodeproj -scheme NEX -destination "id=$UDID" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error|Test Case|XCTAssert|No aparece|failed|TEST|\*\*" || true
+          ls -la /tmp/nex-shots || true
+          grep -q "TEST SUCCEEDED" test.log
+      - name: Diagnóstico
+        if: always()
+        run: |
+          tail -40 backend/server.log || true
+          grep -E "error:|failed" ios/test.log | sort -u | head -60 || true
+      - name: Reducir capturas
+        if: always()
+        run: |
+          mkdir -p shots
+          for f in /tmp/nex-shots/*.png; do
+            [ -f "$f" ] || continue
+            sips -s format jpeg -s formatOptions 70 -Z 1100 "$f" --out "shots/$(basename "${f%.png}").jpg" >/dev/null
+          done
+          ls -la shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capturas
+          path: shots
+      - name: Publicar capturas en docs/capturas
+        if: always() && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')
+        run: |
+          ls shots/*.jpg >/dev/null 2>&1 || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          rm -rf docs/capturas && mkdir -p docs/capturas && cp shots/*.jpg docs/capturas/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/capturas
+          git diff --cached --quiet || git commit -m "Actualizar capturas de la prueba de interfaz [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

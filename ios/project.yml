@@ -5,6 +5,8 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
+  # La app está en español: así MapKit devuelve las indicaciones en español en cualquier iPhone.
+  developmentLanguage: es
 packages:
   NEXCore:
     path: NEXCore
@@ -33,6 +35,9 @@ targets:
       path: NEX/Resources/Info.plist
       properties:
         CFBundleDisplayName: NEX
+        CFBundleDevelopmentRegion: es
+        CFBundleLocalizations:
+          - es
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:
@@ -48,10 +53,27 @@ targets:
           NSAllowsLocalNetworking: true
         ITSAppUsesNonExemptEncryption: false
         NEXAPIBaseURL: $(NEX_API_BASE_URL)
+  NEXUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - NEXUITests
+    dependencies:
+      - target: NEX
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.nex.ios.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: NEX
 schemes:
   NEX:
     build:
       targets:
         NEX: all
+        NEXUITests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - NEXUITests
