@@ -4,13 +4,22 @@
 
 | Parte | Verificación | Resultado |
 |---|---|---|
-| Backend | 18 tests automáticos contra PostgreSQL 16 real + arranque del servidor compilado | Pasan |
-| NEXCore | Tests unitarios (`swift test`) en CI sobre macOS | Ver el último CI de la rama |
-| App iOS | Compilación para simulador en CI sobre macOS | Ver el último CI de la rama |
-| App iOS en ejecución | **No se ha ejecutado** ni en simulador ni en iPhone | Pendiente |
+| Backend | 18 tests automáticos contra PostgreSQL real, en local y en CI | Pasan |
+| NEXCore | Tests unitarios (`swift test`) en CI sobre macOS | Pasan |
+| App iOS | Compilación para simulador en CI sobre macOS (app, widgets y Live Activity) | Compila |
+| App iOS en ejecución | Prueba de interfaz en simulador (iPhone, iOS en español) contra el backend real con avisos sembrados: bienvenida, permiso, mapa, búsqueda, rutas, favorito, previsión por hora de salida, inicio de navegación, inicio de sesión, reporte, voto, perfil, avisos, favoritos, historial y ajustes | Pasa; capturas en `docs/capturas/` |
+| Guía en movimiento, llegada y guardado del viaje | Modo de conducción simulada (`-nexSimulatedDrive`, solo depuración) dentro de la prueba de interfaz | **Pendiente**: el código está subido pero GitHub no asignó runner de macOS a su ejecución; hay que relanzar el CI |
+| iPhone físico | — | **No probado** |
 
-El desarrollo se ha hecho en un entorno Linux sin Xcode ni simulador. Todo lo que depende de ver la app
-funcionando está en la lista de pendientes de abajo y no debe darse por comprobado.
+El desarrollo se ha hecho en Linux sin Xcode; toda la verificación de iOS es la del CI en macOS de GitHub
+(`.github/workflows/ci.yml`). El simulador no entrega cambios de posición a la app durante una prueba, por eso
+la guía en movimiento se comprueba reproduciendo el trayecto dentro de la app y no con GPS real.
+
+Fallos reales encontrados y corregidos gracias a la ejecución en simulador:
+
+- La guía se quedaba en «Buscando señal GPS…» al iniciar con el vehículo parado.
+- Bucle de recálculo al salir desde un punto alejado de la calzada (plaza, aparcamiento).
+- Las indicaciones de giro salían en inglés porque la app no declaraba el español como idioma.
 
 ## Qué hay implementado
 
@@ -22,20 +31,21 @@ peajes y autopistas, capa de tráfico, comparación de tiempo según hora de sal
 fusión de duplicados; reputación; política legal por país; aviso por voz con antelación según velocidad;
 configuración por tipo.
 
-**Resto** — bienvenida y permiso de ubicación, cuenta (registro, sesión, borrado), historial y estadísticas
+**Resto** — favoritos, widget de búsqueda y Live Activity de navegación, bienvenida y permiso de ubicación, cuenta (registro, sesión, borrado), historial y estadísticas
 locales, rutas habituales, modo noche automático por posición solar, ahorro de batería.
 
 ## Qué NO hay todavía
 
 | Función pedida | Estado | Qué falta |
 |---|---|---|
+| Mapa con estilo propio (negro y antracita, autopistas rojizas) | No disponible | MapKit no admite estilos; requiere cambiar de proveedor (ver `docs/DISENO.md`) |
 | Mapas sin conexión | No disponible | MapKit no lo permite; requiere otro proveedor (p. ej. Mapbox) |
 | Incidencias oficiales de tráfico | No integrado | Contratar proveedor (TomTom / HERE) y escribir el adaptador de `TrafficIncidentProvider` |
 | Radares fijos | Importador listo, sin datos | Obtener el conjunto de datos oficial y revisar su licencia |
 | Límite de velocidad y guiado de carril | No disponible | MapKit no lo ofrece |
 | Plazas de aparcamiento libres | No disponible | Proveedor de datos de aparcamiento |
 | CarPlay | No implementado | Solicitar a Apple el entitlement `com.apple.developer.carplay-maps` y crear la escena CarPlay |
-| Widgets y Live Activity | No implementado | Extensión WidgetKit / ActivityKit |
+| Widgets y Live Activity | Implementado y compila; **no probado en ejecución** | Probar en dispositivo (la Isla Dinámica y la pantalla bloqueada no se ven en la prueba automática) |
 | Notificaciones push | No implementado | Clave APNs, registro de dispositivos en backend |
 | Reporte por voz | No implementado | — |
 | Desvío automático por vías cortadas confirmadas | No implementado | MapKit no admite zonas a evitar; requiere otro motor de rutas |
