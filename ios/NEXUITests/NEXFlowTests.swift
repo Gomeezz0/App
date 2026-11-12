@@ -55,7 +55,7 @@ final class NEXFlowTests: XCTestCase {
     }
 
     func testFullFlow() {
-        app.launchArguments += ["-nexPlainPasswordField", "YES"]
+        app.launchArguments += ["-nexPlainPasswordField", "YES", "-AppleLanguages", "(es)", "-AppleLocale", "es_ES"]
         app.launch()
 
         // 1. Bienvenida y permiso de ubicación.
@@ -119,7 +119,7 @@ final class NEXFlowTests: XCTestCase {
         tap(password, "campo contraseña")
         password.typeText("clave-de-siembra-1")
         shot("inicio-sesion")
-        app.buttons.matching(identifier: "Iniciar sesión").allElementsBoundByIndex.last?.tap()
+        tap(app.buttons["auth-submit"], "enviar acceso")
         for label in ["Not Now", "Ahora no"] where app.buttons[label].waitForExistence(timeout: 3) {
             app.buttons[label].tap()
         }

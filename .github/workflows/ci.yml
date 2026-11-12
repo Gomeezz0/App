@@ -119,11 +119,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error|Test Case|XCTAssert|No aparece|failed|TEST|\*\*" || true
           ls -la /tmp/nex-shots || true
           grep -q "TEST SUCCEEDED" test.log
-      - name: Diagnóstico
-        if: always()
-        run: |
-          tail -40 backend/server.log || true
-          grep -E "error:|failed" ios/test.log | sort -u | head -60 || true
       - name: Reducir capturas
         if: always()
         run: |
@@ -149,3 +144,12 @@ jobs:
           git add docs/capturas
           git diff --cached --quiet || git commit -m "Actualizar capturas de la prueba de interfaz [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Resumen
+        if: always()
+        run: |
+          echo "== Peticiones recibidas por el backend =="
+          grep -o '"method":"[A-Z]*","url":"[^"?]*' backend/server.log | sort | uniq -c || true
+          grep -o '"statusCode":[45][0-9][0-9]' backend/server.log | sort | uniq -c || true
+          echo "== Fallos de la prueba =="
+          grep -E "error: -\[" ios/test.log | sed -E 's/^.*NEXFlowTests.swift:([0-9]+): error: [^:]*: /L\1: /' | cut -c1-220 | head -15 || true
+          grep -E "TEST (SUCCEEDED|FAILED)" ios/test.log || true

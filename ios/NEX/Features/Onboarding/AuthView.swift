@@ -68,6 +68,7 @@ struct AuthView: View {
                     }
                     .buttonStyle(NEXPrimaryButtonStyle())
                     .disabled(!isValid || isWorking)
+                    .accessibilityIdentifier("auth-submit")
                     .padding(.top, 8)
                 }
                 .padding(20)
