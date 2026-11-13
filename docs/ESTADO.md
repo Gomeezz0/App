@@ -99,3 +99,14 @@ locales, rutas habituales, modo noche automático por posición solar, ahorro de
       generado por usuarios).
 - [ ] Capturas, descripción, icono definitivo.
 - [ ] TestFlight con conductores reales antes de publicar.
+
+## Estado del CI el 13 de noviembre de 2026
+
+- Ejecuciones de macOS (compilación para simulador, pruebas de NEXCore y prueba de interfaz): **sin resultado**.
+  GitHub no asignó runner de macOS en las ejecuciones 43246682214, 43249914272 (intento 1 y 2); se cancelaron a
+  los 15 minutos. No hay artefacto `NEX-simulador` ni capturas nuevas.
+- Backend (tipos y 18 tests): **pasa** en la ejecución 43249914272.
+- Por tanto, el mapa con velo negro, los ajustes con iconos, la entrada de marca y el trayecto simulado no están
+  verificados en CI. Lo verificado en CI sobre macOS es la última ejecución completa anterior a estos cambios.
+- Pendiente: relanzar el CI cuando haya runner de macOS y revisar capturas y artefacto. TestFlight no se ha lanzado
+  porque requiere los secretos de la cuenta de Apple Developer.
